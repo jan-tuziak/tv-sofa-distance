@@ -83,7 +83,7 @@
         legendRange: 'Zalecany zakres', legendMin: 'min', legendMax: 'max',
         sofa: 'Sofa', tv: 'Telewizor',
         eye: 'wys. oczu ~106 cm', tvCenter: 'środek ekranu',
-        footerPrefix: 'stworzone przez', footerSite: 'educk.pl', footerHref: 'https://educk.pl'
+        footerPrefix: 'stworzone z ❤️ przez', footerSite: 'educk.pl', footerHref: 'https://educk.pl?utm_source=tv-sofa'
       } : {
         pageTitle: 'TV ↔ Sofa Distance',
         inputLabel: 'TV diagonal (inches)',
@@ -92,13 +92,15 @@
         legendRange: 'Recommended range', legendMin: 'min', legendMax: 'max',
         sofa: 'Sofa', tv: 'TV',
         eye: 'eye level ~106 cm', tvCenter: 'screen center',
-        footerPrefix: 'created by', footerSite: 'educk.org', footerHref: 'https://educk.org'
+        footerPrefix: 'created with ❤️ by', footerSite: 'educk.org', footerHref: 'https://educk.org?utm_source=tv-sofa'
       };
       document.title = t.pageTitle; document.getElementById('title').textContent = t.pageTitle;
       document.getElementById('label-diag').textContent = t.inputLabel;
       document.getElementById('legend-range').textContent = t.legendRange;
       document.getElementById('legend-min').textContent = t.legendMin;
       document.getElementById('legend-max').textContent = t.legendMax;
+      // a11y title for SVG
+      const svgTitle = document.getElementById('desc'); if (svgTitle) svgTitle.textContent = t.a11yTitle;
       document.querySelector('html').lang = isPL ? 'pl' : 'en';
       document.getElementById('footer').firstChild.nodeValue = t.footerPrefix + ' ';
       const link = document.getElementById('footer-link'); link.textContent = t.footerSite; link.href = t.footerHref;
