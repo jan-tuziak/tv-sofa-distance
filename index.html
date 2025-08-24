@@ -149,19 +149,22 @@
         // floor line
         add('line', { x1: 20, y1: floorY, x2: W-20, y2: floorY, stroke: 'var(--line)', 'stroke-width': 1 });
 
-        // sofa (stylized)
-        const sofaDepth = 80, seatH = 45, backH = 80;
-        add('rect', { x: sofaFrontX - sofaDepth, y: floorY - backH, width: sofaDepth, height: backH, rx: 10, fill: '#e9eef6', stroke: 'rgba(0,0,0,.12)' });
-        add('line', { x1: sofaFrontX - sofaDepth, y1: floorY - seatH, x2: sofaFrontX, y2: floorY - seatH, stroke: 'rgba(0,0,0,.15)' });
-        add('text', { x: sofaFrontX - sofaDepth/2, y: floorY - backH - 8, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--muted)' }, t.sofa);
+        // sofa (stylized) — scaled in cm for consistency
+        const sofaDepthCm = 90, seatHcm = 44, backHcm = 85;
+        const sofaDepthPx = sofaDepthCm * scaleX;
+        const seatHpx = seatHcm * scaleX;
+        const backHpx = backHcm * scaleX;
+        add('rect', { x: sofaFrontX - sofaDepthPx, y: floorY - backHpx, width: sofaDepthPx, height: backHpx, rx: 10, fill: '#e9eef6', stroke: 'rgba(0,0,0,.12)' });
+        add('line', { x1: sofaFrontX - sofaDepthPx, y1: floorY - seatHpx, x2: sofaFrontX, y2: floorY - seatHpx, stroke: 'rgba(0,0,0,.15)' });
+        add('text', { x: sofaFrontX - sofaDepthPx/2, y: floorY - backHpx - 8, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--muted)' }, t.sofa);
 
         // ===== Eye level line + markers
         const eyeHcm = 106; // ~42"
         const yEye = floorY - eyeHcm * scaleX;
         add('line', { x1: 20, y1: yEye, x2: W-20, y2: yEye, stroke: 'rgba(0,0,0,.18)', 'stroke-dasharray': '4 4' });
         // eye marker near sofa
-        add('circle', { cx: sofaFrontX - sofaDepth/2, cy: yEye, r: 6, fill: 'var(--accent-2)', stroke: 'white', 'stroke-width': 2 });
-        add('text', { x: sofaFrontX - sofaDepth/2, y: yEye - 12, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--muted)' }, t.eye);
+        add('circle', { cx: sofaFrontX - sofaDepthPx/2, cy: yEye, r: 6, fill: 'var(--accent-2)', stroke: 'white', 'stroke-width': 2 });
+        add('text', { x: sofaFrontX - sofaDepthPx/2, y: yEye - 12, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--muted)' }, t.eye);
 
         // recommended band along the floor (green)
         add('rect', { x: xMin, y: floorY - 6, width: Math.max(4, xMax - xMin), height: 12, rx: 6, fill: 'color-mix(in oklab, var(--accent) 18%, white)' });
