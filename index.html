@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Odległość TV — Sofa</title>
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --panel: #ffffff;
+      --text: #0b1020;
+      --muted: #5b6576;
+      --accent: #16a34a; /* green */
+      --accent-2: #2563eb; /* blue */
+      --danger: #ef4444;
+      --line: rgba(0,0,0,0.12);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .card { width: min(920px, 100%); background: var(--panel); border: 1px solid rgba(0,0,0,.08);
+      border-radius: 18px; box-shadow: 0 10px 26px rgba(0,0,0,.08); padding: 22px; }
+    h1 { margin: 0 0 14px; text-align: center; font-size: clamp(20px, 4vw, 28px); }
+
+    .control { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; margin: 8px 0 10px; }
+    .control label { color: var(--muted); }
+    .control input[type=number] { width: 120px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); font-size: 16px; }
+
+    .summary { text-align: center; color: var(--muted); margin: 6px 0 14px; font-size: 15px; }
+    .summary strong { color: var(--text); }
+
+    .canvas-wrap { background: linear-gradient(#fff, #fbfcff); border: 1px solid rgba(0,0,0,.06); border-radius: 14px; padding: 10px; }
+    svg { width: min(880px, 100%); height: 360px; display: block; }
+
+    .legend { display: flex; gap: 16px; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+    .chip { display:inline-flex; align-items:center; gap:6px; }
+    .chip i { width: 16px; height: 6px; display:inline-block; border-radius: 999px; }
+
+    .footer { text-align: center; color: var(--muted); margin-top: 14px; font-size: 14px; }
+    .footer a { color: inherit; text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1 id="title">Odległość TV — Sofa</h1>
+
+    <div class="control">
+      <label for="diag" id="label-diag">Przekątna TV (cale)</label>
+      <input id="diag" type="number" min="20" max="120" step="1" value="55" inputmode="numeric" />
+    </div>
+
+    <p class="summary" id="summary">Zalecana odległość: <strong>2,1–3,5 m</strong></p>
+
+    <div class="canvas-wrap">
+      <svg id="scene" viewBox="0 0 900 360" role="img" aria-labelledby="title desc">
+        <title id="desc">Schemat odległości sofy od telewizora</title>
+        <!-- Rysunek generowany w JS -->
+      </svg>
+      <div class="legend">
+        <span class="chip"><i style="background: color-mix(in oklab, var(--accent) 70%, white);"></i><span id="legend-range">Zalecany zakres</span></span>
+        <span class="chip"><i style="background: var(--accent-2);"></i><span id="legend-min">min</span></span>
+        <span class="chip"><i style="background: var(--danger);"></i><span id="legend-max">max</span></span>
+      </div>
+    </div>
+
+    <p class="footer" id="footer">stworzone przez <a id="footer-link" href="https://educk.pl" target="_blank">educk.pl</a></p>
+  </main>
+
+  <script>
+    (function(){
+      // ===== i18n by domain (.pl => PL, else EN)
+      const isPL = window.location.hostname.endsWith('.pl');
+      const t = isPL ? {
+        pageTitle: 'Odległość TV — Sofa',
+        inputLabel: 'Przekątna TV (cale)',
+        summary: (min, max) => `Zalecana odległość: <strong>${min}–${max} m</strong>`,
+        a11yTitle: 'Schemat odległości sofy od telewizora',
+        legendRange: 'Zalecany zakres', legendMin: 'min', legendMax: 'max',
+        sofa: 'Sofa', tv: 'Telewizor',
+        eye: 'wys. oczu ~106 cm', tvCenter: 'środek ekranu',
+        footerPrefix: 'stworzone przez', footerSite: 'educk.pl', footerHref: 'https://educk.pl'
+      } : {
+        pageTitle: 'TV ↔ Sofa Distance',
+        inputLabel: 'TV diagonal (inches)',
+        summary: (min, max) => `Recommended distance: <strong>${min}–${max} m</strong>`,
+        a11yTitle: 'Diagram of sofa to TV distance',
+        legendRange: 'Recommended range', legendMin: 'min', legendMax: 'max',
+        sofa: 'Sofa', tv: 'TV',
+        eye: 'eye level ~106 cm', tvCenter: 'screen center',
+        footerPrefix: 'created by', footerSite: 'educk.org', footerHref: 'https://educk.org'
+      };
+      document.title = t.pageTitle; document.getElementById('title').textContent = t.pageTitle;
+      document.getElementById('label-diag').textContent = t.inputLabel;
+      document.getElementById('legend-range').textContent = t.legendRange;
+      document.getElementById('legend-min').textContent = t.legendMin;
+      document.getElementById('legend-max').textContent = t.legendMax;
+      document.querySelector('html').lang = isPL ? 'pl' : 'en';
+      document.getElementById('footer').firstChild.nodeValue = t.footerPrefix + ' ';
+      const link = document.getElementById('footer-link'); link.textContent = t.footerSite; link.href = t.footerHref;
+
+      // ===== helpers
+      const inchToCm = v => v * 2.54;
+      const cmToM = v => v / 100;
+      const fmtM = v => (Math.round(v * 10) / 10).toFixed(1);
+
+      // Given TV diagonal in inches, compute 16:9 height in cm (to scale TV edge height)
+      function tvHeightFromDiagonal(diagIn){
+        const hIn = diagIn * (9  / Math.sqrt(16*16 + 9*9)); // ~0.4903
+        return inchToCm(hIn);
+      }
+
+      // main draw
+      const svg = document.getElementById('scene');
+      const W = 900, H = 360; const floorY = H - 30;
+      const sofaFrontX = 220; // pion przy froncie sofy
+      const marginRight = 30;
+
+      function draw(diagIn){
+        // guard
+        if(!diagIn || diagIn < 20) diagIn = 55;
+
+        // distances (range)
+        const minDistCm = inchToCm(diagIn * 1.5);
+        const maxDistCm = inchToCm(diagIn * 2.5);
+        const minM = fmtM(cmToM(minDistCm));
+        const maxM = fmtM(cmToM(maxDistCm));
+        document.getElementById('summary').innerHTML = t.summary(minM, maxM);
+
+        // TV height for side view
+        const tvHcm = tvHeightFromDiagonal(diagIn);
+
+        // horizontal scale to fit the max distance nicely
+        const usable = W - sofaFrontX - marginRight - 40; // padding for labels
+        const scaleX = Math.min( usable / maxDistCm, 1.4 ); // px per cm
+
+        // key X positions
+        const xMin = sofaFrontX + minDistCm * scaleX;
+        const xMax = sofaFrontX + maxDistCm * scaleX;
+        const xTV  = (xMin + xMax) / 2; // TV pośrodku zalecanego zakresu
+
+        // base svg content
+        svg.innerHTML = '';
+
+        // floor line
+        add('line', { x1: 20, y1: floorY, x2: W-20, y2: floorY, stroke: 'var(--line)', 'stroke-width': 1 });
+
+        // sofa (stylized)
+        const sofaDepth = 80, seatH = 45, backH = 80;
+        add('rect', { x: sofaFrontX - sofaDepth, y: floorY - backH, width: sofaDepth, height: backH, rx: 10, fill: '#e9eef6', stroke: 'rgba(0,0,0,.12)' });
+        add('line', { x1: sofaFrontX - sofaDepth, y1: floorY - seatH, x2: sofaFrontX, y2: floorY - seatH, stroke: 'rgba(0,0,0,.15)' });
+        add('text', { x: sofaFrontX - sofaDepth/2, y: floorY - backH - 8, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--muted)' }, t.sofa);
+
+        // ===== Eye level line + markers
+        const eyeHcm = 106; // ~42"
+        const yEye = floorY - eyeHcm * scaleX;
+        add('line', { x1: 20, y1: yEye, x2: W-20, y2: yEye, stroke: 'rgba(0,0,0,.18)', 'stroke-dasharray': '4 4' });
+        // eye marker near sofa
+        add('circle', { cx: sofaFrontX - sofaDepth/2, cy: yEye, r: 6, fill: 'var(--accent-2)', stroke: 'white', 'stroke-width': 2 });
+        add('text', { x: sofaFrontX - sofaDepth/2, y: yEye - 12, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--muted)' }, t.eye);
+
+        // recommended band along the floor (green)
+        add('rect', { x: xMin, y: floorY - 6, width: Math.max(4, xMax - xMin), height: 12, rx: 6, fill: 'color-mix(in oklab, var(--accent) 18%, white)' });
+
+        // TV side view (thin edge facing sofa) at xTV
+        const tvHpx = Math.min(120, tvHcm * scaleX);
+        const tvThickness = 8;
+        const tvX = xTV - tvThickness; const tvY = yEye - tvHpx / 2;
+        add('rect', { x: tvX, y: tvY, width: tvThickness, height: tvHpx, rx: 2, fill: '#111827', stroke: 'rgba(0,0,0,.5)' });
+        add('text', { x: tvX + tvThickness/2, y: tvY - 8, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--muted)' }, t.tv);
+
+        // TV center marker aligned suggestion
+        const yTvCenter = tvY + tvHpx/2;
+        add('circle', { cx: tvX + tvThickness/2, cy: yTvCenter, r: 5, fill: 'var(--accent)', stroke: 'white', 'stroke-width': 2 });
+        add('text', { x: tvX + tvThickness/2 + 10, y: yTvCenter + 4, 'text-anchor': 'start', 'font-size': 12, fill: 'var(--muted)' }, t.tvCenter);
+
+        // MAIN DIMENSION (sofa → TV) with min/max annotated on the line
+        const yDim = floorY - 92;
+        drawMainDim(sofaFrontX, xTV, yDim);
+        // ticks + labels for min/max on the main dimension
+        drawTickLabel(xMin, yDim, `${t.legendMin} ${minM}m`, 'var(--accent-2)');
+        drawTickLabel(xMax, yDim, `${t.legendMax} ${maxM}m`, 'var(--danger)');
+
+        function drawMainDim(x1, x2, y){
+          add('line', { x1, y1: y, x2, y2: y, stroke: 'rgba(0,0,0,.35)' });
+          // arrowheads at both ends
+          add('line', { x1, y1: y, x2: x1, y2: y - 6, stroke: 'rgba(0,0,0,.35)' });
+          add('line', { x1, y1: y, x2: x1, y2: y + 6, stroke: 'rgba(0,0,0,.35)' });
+          add('line', { x1: x2, y1: y, x2, y2: y - 6, stroke: 'rgba(0,0,0,.35)' });
+          add('line', { x1: x2, y1: y, x2, y2: y + 6, stroke: 'rgba(0,0,0,.35)' });
+        }
+
+        function drawTickLabel(x, y, label, color){
+          add('line', { x1: x, y1: y - 8, x2: x, y2: y + 8, stroke: color, 'stroke-width': 2 });
+          add('text', { x, y: y - 10, 'text-anchor': 'middle', 'font-size': 12, fill: color }, label);
+        }
+
+        function add(tag, attrs, text){
+          const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+          Object.entries(attrs).forEach(([k,v])=> el.setAttribute(k,v));
+          if(text) el.textContent = text;
+          svg.appendChild(el);
+          return el;
+        }
+      }
+
+      const input = document.getElementById('diag');
+      input.addEventListener('input', () => draw(parseFloat(input.value)));
+
+      // initial
+      draw(parseFloat(input.value));
+    })();
+  </script>
+</body>
+</html>
