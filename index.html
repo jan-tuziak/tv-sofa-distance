@@ -25,13 +25,13 @@
     }
     .card { width: min(920px, 100%); background: var(--panel); border: 1px solid rgba(0,0,0,.08);
       border-radius: 18px; box-shadow: 0 10px 26px rgba(0,0,0,.08); padding: 22px; }
-    h1 { margin: 0 0 14px; text-align: center; font-size: clamp(20px, 4vw, 28px); }
+    h1 { margin: 0 0 28px; text-align: center; font-size: clamp(20px, 4vw, 28px); }
 
-    .control { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; margin: 8px 0 10px; }
+    .control { display: grid; grid-template-columns: auto auto; grid-auto-flow: column; gap: 10px; align-items: center; margin: 0 auto 28px; width: fit-content; }
     .control label { color: var(--muted); }
-    .control input[type=number] { width: 120px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); font-size: 16px; }
+    .control input[type=number] { width: 96px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); font-size: 16px; }
 
-    .summary { text-align: center; color: var(--muted); margin: 6px 0 14px; font-size: 15px; }
+    .summary { text-align: center; color: var(--muted); margin: 12px 0 24px; font-size: 15px; }
     .summary strong { color: var(--text); }
 
     .canvas-wrap { background: linear-gradient(#fff, #fbfcff); border: 1px solid rgba(0,0,0,.06); border-radius: 14px; padding: 10px; }
@@ -40,6 +40,8 @@
     .legend { display: flex; gap: 16px; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; margin: 8px 0 0; }
     .chip { display:inline-flex; align-items:center; gap:6px; }
     .chip i { width: 16px; height: 6px; display:inline-block; border-radius: 999px; }
+
+    .note { text-align: center; color: var(--muted); font-size: 13px; margin: 10px 0 0; }
 
     .footer { text-align: center; color: var(--muted); margin-top: 14px; font-size: 14px; }
     .footer a { color: inherit; text-decoration: underline; }
@@ -68,6 +70,8 @@
       </div>
     </div>
 
+    <p class="note" id="note"></p>
+
     <p class="footer" id="footer">stworzone przez <a id="footer-link" href="https://educk.pl" target="_blank">educk.pl</a></p>
   </main>
 
@@ -83,7 +87,8 @@
         legendRange: 'Zalecany zakres', legendMin: 'min', legendMax: 'max',
         sofa: 'Sofa', tv: 'Telewizor',
         eye: 'wys. oczu ~106 cm', tvCenter: 'środek ekranu',
-        footerPrefix: 'stworzone z ❤️ przez', footerSite: 'educk.pl', footerHref: 'https://educk.pl?utm_source=tv-sofa'
+        footerPrefix: 'stworzone przez', footerSite: 'educk.pl', footerHref: 'https://educk.pl',
+        note: 'Liczymy zakres oglądania jako ~1,5–2,5× przekątna ekranu (16:9). Środek ekranu wyrównujemy do wysokości oczu (~106 cm) dla wygody.'
       } : {
         pageTitle: 'TV ↔ Sofa Distance',
         inputLabel: 'TV diagonal (inches)',
@@ -92,7 +97,8 @@
         legendRange: 'Recommended range', legendMin: 'min', legendMax: 'max',
         sofa: 'Sofa', tv: 'TV',
         eye: 'eye level ~106 cm', tvCenter: 'screen center',
-        footerPrefix: 'created with ❤️ by', footerSite: 'educk.org', footerHref: 'https://educk.org?utm_source=tv-sofa'
+        footerPrefix: 'created by', footerSite: 'educk.org', footerHref: 'https://educk.org',
+        note: 'Viewing range is ~1.5–2.5× the screen diagonal (16:9). We align the screen center to eye level (~106 cm) for comfort.'
       };
       document.title = t.pageTitle; document.getElementById('title').textContent = t.pageTitle;
       document.getElementById('label-diag').textContent = t.inputLabel;
@@ -101,6 +107,7 @@
       document.getElementById('legend-max').textContent = t.legendMax;
       // a11y title for SVG
       const svgTitle = document.getElementById('desc'); if (svgTitle) svgTitle.textContent = t.a11yTitle;
+      const noteEl = document.getElementById('note'); if (noteEl) noteEl.textContent = t.note;
       document.querySelector('html').lang = isPL ? 'pl' : 'en';
       document.getElementById('footer').firstChild.nodeValue = t.footerPrefix + ' ';
       const link = document.getElementById('footer-link'); link.textContent = t.footerSite; link.href = t.footerHref;
