@@ -27,9 +27,14 @@
       border-radius: 18px; box-shadow: 0 10px 26px rgba(0,0,0,.08); padding: 22px; }
     h1 { margin: 0 0 28px; text-align: center; font-size: clamp(20px, 4vw, 28px); }
 
+    /* Segmented control */
+    .seg { display: flex; width: fit-content; background: #f1f5f9; border: 1px solid rgba(0,0,0,.08); border-radius: 999px; padding: 4px; gap: 6px; margin: 0 auto 16px; }
+    .seg button { border: 0; background: transparent; padding: 8px 14px; border-radius: 999px; cursor: pointer; color: var(--muted); font-weight: 600; }
+    .seg button.active { background: #ffffff; color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+
     .control { display: grid; grid-template-columns: auto auto; grid-auto-flow: column; gap: 10px; align-items: center; margin: 0 auto 28px; width: fit-content; }
     .control label { color: var(--muted); }
-    .control input[type=number] { width: 96px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); font-size: 16px; }
+    .control input[type=number] { width: 110px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); font-size: 16px; }
 
     .summary { text-align: center; color: var(--muted); margin: 12px 0 24px; font-size: 15px; }
     .summary strong { color: var(--text); }
@@ -37,7 +42,7 @@
     .canvas-wrap { background: linear-gradient(#fff, #fbfcff); border: 1px solid rgba(0,0,0,.06); border-radius: 14px; padding: 10px; }
     svg { width: min(880px, 100%); height: 360px; display: block; }
 
-    .legend { display: flex; gap: 16px; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+    .legend { display: flex; gap: 16px; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; margin: 8px 0 0; flex-wrap: wrap; }
     .chip { display:inline-flex; align-items:center; gap:6px; }
     .chip i { width: 16px; height: 6px; display:inline-block; border-radius: 999px; }
 
@@ -51,9 +56,15 @@
   <main class="card">
     <h1 id="title">Odległość TV — Sofa</h1>
 
+    <!-- Segmented toggle -->
+    <div class="seg" role="tablist" aria-label="Tryb kalkulatora">
+      <button id="mode-diag" role="tab" aria-selected="true" class="active">Ustal odległość</button>
+      <button id="mode-dist" role="tab" aria-selected="false">Dobierz rozmiar TV</button>
+    </div>
+
     <div class="control">
-      <label for="diag" id="label-diag">Przekątna TV (cale)</label>
-      <input id="diag" type="number" min="20" max="120" step="1" value="55" inputmode="numeric" />
+      <label for="mainInput" id="label-main">Przekątna TV (cale)</label>
+      <input id="mainInput" type="number" min="20" max="120" step="1" value="55" inputmode="numeric" />
     </div>
 
     <p class="summary" id="summary">Zalecana odległość: <strong>2,1–3,5 m</strong></p>
@@ -64,9 +75,10 @@
         <!-- Rysunek generowany w JS -->
       </svg>
       <div class="legend">
-        <span class="chip"><i style="background: color-mix(in oklab, var(--accent) 70%, white);"></i><span id="legend-range">Zalecany zakres</span></span>
-        <span class="chip"><i style="background: var(--accent-2);"></i><span id="legend-min">min</span></span>
-        <span class="chip"><i style="background: var(--danger);"></i><span id="legend-max">max</span></span>
+        <span id="chip-range" class="chip"><i style="background: color-mix(in oklab, var(--accent) 70%, white);"></i><span id="legend-range">Zalecany zakres</span></span>
+        <span id="chip-min" class="chip"><i style="background: var(--accent-2);"></i><span id="legend-min">min</span></span>
+        <span id="chip-max" class="chip"><i style="background: var(--danger);"></i><span id="legend-max">max</span></span>
+        <span id="chip-dist" class="chip" style="display:none"><i style="background: #0ea5e9;"></i><span id="legend-dist">Twój dystans</span></span>
       </div>
     </div>
 
@@ -81,41 +93,56 @@
       const isPL = window.location.hostname.endsWith('.pl');
       const t = isPL ? {
         pageTitle: 'Odległość TV — Sofa',
-        inputLabel: 'Przekątna TV (cale)',
-        summary: (min, max) => `Zalecana odległość: <strong>${min}–${max} m</strong>`,
+        segA: 'Ustal odległość od sofy',
+        segB: 'Dobierz rozmiar TV',
+        inputLabelA: 'Przekątna TV (cale)',
+        inputLabelB: 'Dystans od sofy (m)',
+        summaryA: (min, max) => `Zalecana odległość: <strong>${min}–${max} m</strong>`,
+        summaryB: (minIn, maxIn, midIn) => `Rekomendowana przekątna: <strong>${minIn}–${maxIn}″</strong> (sweet spot ~ <strong>${midIn}″</strong>)`,
         a11yTitle: 'Schemat odległości sofy od telewizora',
-        legendRange: 'Zalecany zakres', legendMin: 'min', legendMax: 'max',
+        legendRange: 'Zalecany zakres', legendMin: 'min', legendMax: 'max', legendDist: 'Twój dystans',
         sofa: 'Sofa', tv: 'Telewizor',
         eye: 'wys. oczu ~106 cm', tvCenter: 'środek ekranu',
         footerPrefix: 'stworzone z ❤️ przez', footerSite: 'educk.pl', footerHref: 'https://educk.pl?utm_source=tv-sofa-distance',
         note: 'Liczymy zakres oglądania jako ~1,5–2,5× przekątna ekranu (16:9). Środek ekranu wyrównujemy do wysokości oczu (~106 cm) dla wygody.'
       } : {
         pageTitle: 'TV ↔ Sofa Distance',
-        inputLabel: 'TV diagonal (inches)',
-        summary: (min, max) => `Recommended distance: <strong>${min}–${max} m</strong>`,
+        segA: 'Get Sofa distance',
+        segB: 'Pick TV size',
+        inputLabelA: 'TV diagonal (inches)',
+        inputLabelB: 'Distance from sofa (m)',
+        summaryA: (min, max) => `Recommended distance: <strong>${min}–${max} m</strong>`,
+        summaryB: (minIn, maxIn, midIn) => `Recommended diagonal: <strong>${minIn}–${maxIn}″</strong> (sweet spot ~ <strong>${midIn}″</strong>)`,
         a11yTitle: 'Diagram of sofa to TV distance',
-        legendRange: 'Recommended range', legendMin: 'min', legendMax: 'max',
+        legendRange: 'Recommended range', legendMin: 'min', legendMax: 'max', legendDist: 'Your distance',
         sofa: 'Sofa', tv: 'TV',
         eye: 'eye level ~106 cm', tvCenter: 'screen center',
         footerPrefix: 'created with ❤️ by', footerSite: 'educk.org', footerHref: 'https://educk.org?utm_source=tv-sofa-distance',
         note: 'Viewing range is ~1.5–2.5× the screen diagonal (16:9). We align the screen center to eye level (~106 cm) for comfort.'
       };
       document.title = t.pageTitle; document.getElementById('title').textContent = t.pageTitle;
-      document.getElementById('label-diag').textContent = t.inputLabel;
+      document.getElementById('mode-diag').textContent = t.segA;
+      document.getElementById('mode-dist').textContent = t.segB;
       document.getElementById('legend-range').textContent = t.legendRange;
       document.getElementById('legend-min').textContent = t.legendMin;
       document.getElementById('legend-max').textContent = t.legendMax;
-      // a11y title for SVG
-      const svgTitle = document.getElementById('desc'); if (svgTitle) svgTitle.textContent = t.a11yTitle;
-      const noteEl = document.getElementById('note'); if (noteEl) noteEl.textContent = t.note;
+      document.getElementById('legend-dist').textContent = t.legendDist;
       document.querySelector('html').lang = isPL ? 'pl' : 'en';
       document.getElementById('footer').firstChild.nodeValue = t.footerPrefix + ' ';
       const link = document.getElementById('footer-link'); link.textContent = t.footerSite; link.href = t.footerHref;
+      const svgTitle = document.getElementById('desc'); if (svgTitle) svgTitle.textContent = t.a11yTitle;
+      const noteEl = document.getElementById('note'); if (noteEl) noteEl.textContent = t.note;
+
+      // ===== state
+      let mode = 'diag'; // 'diag' | 'dist'
 
       // ===== helpers
       const inchToCm = v => v * 2.54;
       const cmToM = v => v / 100;
+      const mToCm = v => v * 100;
+      const cmToIn = v => v / 2.54;
       const fmtM = v => (Math.round(v * 10) / 10).toFixed(1);
+      const fmtIn = v => Math.round(v); // whole inches are fine for quick read
 
       // Given TV diagonal in inches, compute 16:9 height in cm (to scale TV edge height)
       function tvHeightFromDiagonal(diagIn){
@@ -123,42 +150,57 @@
         return inchToCm(hIn);
       }
 
-      // main draw
       const svg = document.getElementById('scene');
       const W = 900, H = 360; const floorY = H - 30;
-      const sofaFrontX = 220; // pion przy froncie sofy
+      const sofaFrontX = 220; // vertical at sofa front
       const marginRight = 30;
 
-      function draw(diagIn){
-        // guard
+      function drawFromDiag(diagIn){
         if(!diagIn || diagIn < 20) diagIn = 55;
 
-        // distances (range)
         const minDistCm = inchToCm(diagIn * 1.5);
         const maxDistCm = inchToCm(diagIn * 2.5);
         const minM = fmtM(cmToM(minDistCm));
         const maxM = fmtM(cmToM(maxDistCm));
-        document.getElementById('summary').innerHTML = t.summary(minM, maxM);
+        document.getElementById('summary').innerHTML = t.summaryA(minM, maxM);
 
-        // TV height for side view
         const tvHcm = tvHeightFromDiagonal(diagIn);
-
-        // horizontal scale to fit the max distance nicely
-        const usable = W - sofaFrontX - marginRight - 40; // padding for labels
-        const scaleX = Math.min( usable / maxDistCm, 1.4 ); // px per cm
-
-        // key X positions
+        const usable = W - sofaFrontX - marginRight - 40;
+        const scaleX = Math.min( usable / maxDistCm, 1.4 );
         const xMin = sofaFrontX + minDistCm * scaleX;
         const xMax = sofaFrontX + maxDistCm * scaleX;
-        const xTV  = (xMin + xMax) / 2; // TV pośrodku zalecanego zakresu
+        const xTV  = (xMin + xMax) / 2;
 
-        // base svg content
+        renderScene({ scaleX, xMin, xMax, xTV, tvHcm, labelMainMin: `${t.legendMin} ${minM}m`, labelMainMax: `${t.legendMax} ${maxM}m`, showRange:true, showMinMax:true, distLabel:null });
+      }
+
+      function drawFromDist(distM){
+        if(!distM || distM < 0.8) distM = 2.5; // sensible default
+
+        const distCm = mToCm(distM);
+        // recommended diagonal range in inches
+        const minIn = cmToIn(distCm) / 2.5;
+        const maxIn = cmToIn(distCm) / 1.5;
+        const midIn = (minIn + maxIn) / 2;
+        document.getElementById('summary').innerHTML = t.summaryB(fmtIn(minIn), fmtIn(maxIn), fmtIn(midIn));
+
+        const tvHcm = tvHeightFromDiagonal(midIn);
+        const usable = W - sofaFrontX - marginRight - 40;
+        const ref = distCm * 1.15; // leave breathing room
+        const scaleX = Math.min( usable / ref, 1.4 );
+        const xTV = sofaFrontX + distCm * scaleX;
+
+        renderScene({ scaleX, xMin:null, xMax:null, xTV, tvHcm, labelMainMin:null, labelMainMax:null, showRange:false, showMinMax:false, distLabel: `${t.legendDist}: ${fmtM(distM)}m` });
+      }
+
+      function renderScene(opts){
+        const { scaleX, xMin, xMax, xTV, tvHcm, labelMainMin, labelMainMax, showRange, showMinMax, distLabel } = opts;
         svg.innerHTML = '';
 
-        // floor line
+        // floor
         add('line', { x1: 20, y1: floorY, x2: W-20, y2: floorY, stroke: 'var(--line)', 'stroke-width': 1 });
 
-        // sofa (stylized) — scaled in cm for consistency
+        // sofa scaled in cm
         const sofaDepthCm = 90, seatHcm = 44, backHcm = 85;
         const sofaDepthPx = sofaDepthCm * scaleX;
         const seatHpx = seatHcm * scaleX;
@@ -167,50 +209,49 @@
         add('line', { x1: sofaFrontX - sofaDepthPx, y1: floorY - seatHpx, x2: sofaFrontX, y2: floorY - seatHpx, stroke: 'rgba(0,0,0,.15)' });
         add('text', { x: sofaFrontX - sofaDepthPx/2, y: floorY - backHpx - 8, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--muted)' }, t.sofa);
 
-        // ===== Eye level line + markers
-        const eyeHcm = 106; // ~42"
+        // eye level
+        const eyeHcm = 106;
         const yEye = floorY - eyeHcm * scaleX;
         add('line', { x1: 20, y1: yEye, x2: W-20, y2: yEye, stroke: 'rgba(0,0,0,.18)', 'stroke-dasharray': '4 4' });
-        // eye marker near sofa
         add('circle', { cx: sofaFrontX - sofaDepthPx/2, cy: yEye, r: 6, fill: 'var(--accent-2)', stroke: 'white', 'stroke-width': 2 });
         add('text', { x: sofaFrontX - sofaDepthPx/2, y: yEye - 12, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--muted)' }, t.eye);
 
-        // recommended band along the floor (green)
-        add('rect', { x: xMin, y: floorY - 6, width: Math.max(4, xMax - xMin), height: 12, rx: 6, fill: 'color-mix(in oklab, var(--accent) 18%, white)' });
+        // optional recommended band
+        if(showRange && xMin != null && xMax != null){
+          add('rect', { x: xMin, y: floorY - 6, width: Math.max(4, xMax - xMin), height: 12, rx: 6, fill: 'color-mix(in oklab, var(--accent) 18%, white)' });
+        }
 
-        // TV side view (thin edge facing sofa) at xTV
+        // TV side view with center on eye level
         const tvHpx = Math.min(120, tvHcm * scaleX);
         const tvThickness = 8;
         const tvX = xTV - tvThickness; const tvY = yEye - tvHpx / 2;
         add('rect', { x: tvX, y: tvY, width: tvThickness, height: tvHpx, rx: 2, fill: '#111827', stroke: 'rgba(0,0,0,.5)' });
         add('text', { x: tvX + tvThickness/2, y: tvY - 8, 'text-anchor': 'middle', 'font-size': 12, fill: 'var(--muted)' }, t.tv);
+        add('circle', { cx: tvX + tvThickness/2, cy: yEye, r: 5, fill: 'var(--accent)', stroke: 'white', 'stroke-width': 2 });
+        add('text', { x: tvX + tvThickness/2 + 10, y: yEye + 4, 'text-anchor': 'start', 'font-size': 12, fill: 'var(--muted)' }, t.tvCenter);
 
-        // TV center marker aligned suggestion
-        const yTvCenter = tvY + tvHpx/2;
-        add('circle', { cx: tvX + tvThickness/2, cy: yTvCenter, r: 5, fill: 'var(--accent)', stroke: 'white', 'stroke-width': 2 });
-        add('text', { x: tvX + tvThickness/2 + 10, y: yTvCenter + 4, 'text-anchor': 'start', 'font-size': 12, fill: 'var(--muted)' }, t.tvCenter);
-
-        // MAIN DIMENSION (sofa → TV) with min/max annotated on the line
+        // MAIN DIMENSION line sofa → TV
         const yDim = floorY - 92;
         drawMainDim(sofaFrontX, xTV, yDim);
-        // ticks + labels for min/max on the main dimension
-        drawTickLabel(xMin, yDim, `${t.legendMin} ${minM}m`, 'var(--accent-2)');
-        drawTickLabel(xMax, yDim, `${t.legendMax} ${maxM}m`, 'var(--danger)');
+        if(showMinMax && xMin != null && xMax != null){
+          drawTickLabel(xMin, yDim, labelMainMin, 'var(--accent-2)');
+          drawTickLabel(xMax, yDim, labelMainMax, 'var(--danger)');
+        }
+        if(distLabel){
+          drawTickLabel(xTV, yDim, distLabel, '#0ea5e9');
+        }
 
         function drawMainDim(x1, x2, y){
           add('line', { x1, y1: y, x2, y2: y, stroke: 'rgba(0,0,0,.35)' });
-          // arrowheads at both ends
           add('line', { x1, y1: y, x2: x1, y2: y - 6, stroke: 'rgba(0,0,0,.35)' });
           add('line', { x1, y1: y, x2: x1, y2: y + 6, stroke: 'rgba(0,0,0,.35)' });
           add('line', { x1: x2, y1: y, x2, y2: y - 6, stroke: 'rgba(0,0,0,.35)' });
           add('line', { x1: x2, y1: y, x2, y2: y + 6, stroke: 'rgba(0,0,0,.35)' });
         }
-
         function drawTickLabel(x, y, label, color){
           add('line', { x1: x, y1: y - 8, x2: x, y2: y + 8, stroke: color, 'stroke-width': 2 });
-          add('text', { x, y: y - 10, 'text-anchor': 'middle', 'font-size': 12, fill: color }, label);
+          add('text', { x, y: y + 24, 'text-anchor': 'middle', 'font-size': 12, fill: color }, label);
         }
-
         function add(tag, attrs, text){
           const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
           Object.entries(attrs).forEach(([k,v])=> el.setAttribute(k,v));
@@ -220,11 +261,51 @@
         }
       }
 
-      const input = document.getElementById('diag');
-      input.addEventListener('input', () => draw(parseFloat(input.value)));
+      // ===== UI wiring
+      const input = document.getElementById('mainInput');
+      const btnDiag = document.getElementById('mode-diag');
+      const btnDist = document.getElementById('mode-dist');
+      const chipRange = document.getElementById('chip-range');
+      const chipMin = document.getElementById('chip-min');
+      const chipMax = document.getElementById('chip-max');
+      const chipDist = document.getElementById('chip-dist');
+
+      function setMode(next){
+        if(next === mode) return;
+        mode = next;
+        // buttons state
+        btnDiag.classList.toggle('active', mode==='diag');
+        btnDiag.setAttribute('aria-selected', mode==='diag');
+        btnDist.classList.toggle('active', mode==='dist');
+        btnDist.setAttribute('aria-selected', mode==='dist');
+        // legend visibility
+        chipRange.style.display = mode==='diag' ? '' : 'none';
+        chipMin.style.display   = mode==='diag' ? '' : 'none';
+        chipMax.style.display   = mode==='diag' ? '' : 'none';
+        chipDist.style.display  = mode==='dist' ? '' : 'none';
+        // label + input defaults
+        if(mode==='diag'){
+          document.getElementById('label-main').textContent = t.inputLabelA;
+          input.min = 20; input.max = 120; input.step = 1; input.value = 55;
+        } else {
+          document.getElementById('label-main').textContent = t.inputLabelB;
+          input.min = 0.8; input.max = 8; input.step = 0.1; input.value = 2.5;
+        }
+        recalc();
+      }
+
+      function recalc(){
+        const val = parseFloat(input.value);
+        if(mode==='diag') drawFromDiag(val); else drawFromDist(val);
+      }
+
+      btnDiag.addEventListener('click', ()=> setMode('diag'));
+      btnDist.addEventListener('click', ()=> setMode('dist'));
+      input.addEventListener('input', recalc);
 
       // initial
-      draw(parseFloat(input.value));
+      chipDist.style.display = 'none';
+      drawFromDiag(parseFloat(input.value));
     })();
   </script>
 </body>
